@@ -23,7 +23,11 @@ const (
 )
 
 func NewGinLogger(cfg config.ExtraConfig, loggerConfig gin.LoggerConfig) gin.HandlerFunc {
-	logrusGinConfiguration, ok := ConfigGetter(cfg).(Config)
+	telemetryConfig, err := ConfigGetter(cfg)
+	if err != nil {
+		panic(err)
+	}
+	logrusGinConfiguration := telemetryConfig.(TelemetryConfig).Logging
 	var logger = logrus.StandardLogger()
 	logger.SetFormatter(&ecslogrus.Formatter{
 		DisableHTMLEscape: logrusGinConfiguration.ECSFormatter.DisableHTMLEscape,
@@ -31,9 +35,9 @@ func NewGinLogger(cfg config.ExtraConfig, loggerConfig gin.LoggerConfig) gin.Han
 		PrettyPrint:       logrusGinConfiguration.ECSFormatter.PrettyPrint,
 	})
 
-	if !ok {
-		return gin.LoggerWithConfig(loggerConfig)
-	}
+	// if !ok {
+	// 	return gin.LoggerWithConfig(loggerConfig)
+	// }
 
 	loggerConfig.SkipPaths = logrusGinConfiguration.SkipPaths
 	logger.Info(fmt.Sprintf("%s: total skip paths set: %d", moduleName, len(logrusGinConfiguration.SkipPaths)))
@@ -47,7 +51,7 @@ func NewGinLogger(cfg config.ExtraConfig, loggerConfig gin.LoggerConfig) gin.Han
 
 type LogrusFormatter struct {
 	logger *logrus.Logger
-	config Config
+	config LoggingConfig
 }
 
 func (lf LogrusFormatter) AccessLogFormatter(params gin.LogFormatterParams) string {
@@ -84,10 +88,11 @@ var ErrWrongConfig = errors.New("getting the extra config for the krakend-logrus
 
 // NewLogger returns a krakend logger wrapping a logrus logger
 func NewApplicationLogger(cfg config.ExtraConfig, ctx context.Context) (*Logger, error) {
-	logConfig, ok := ConfigGetter(cfg).(Config)
-	if !ok {
-		return nil, ErrWrongConfig
+	telemetryConfig, err := ConfigGetter(cfg)
+	if err != nil {
+		panic(err)
 	}
+	logConfig := telemetryConfig.(TelemetryConfig).Logging
 
 	level, ok := logLevels[logConfig.Level]
 	if !ok {
