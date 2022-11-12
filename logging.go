@@ -5,7 +5,6 @@
 package telemetry
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -31,8 +30,8 @@ func NewGinLogger(cfg config.ExtraConfig, loggerConfig gin.LoggerConfig) gin.Han
 	var logger = logrus.StandardLogger()
 	logger.SetFormatter(&ecslogrus.Formatter{
 		DisableHTMLEscape: logrusGinConfiguration.ECSFormatter.DisableHTMLEscape,
-		DataKey:           logrusGinConfiguration.ECSFormatter.DataKey,
-		PrettyPrint:       logrusGinConfiguration.ECSFormatter.PrettyPrint,
+		// DataKey:           logrusGinConfiguration.ECSFormatter.DataKey,
+		PrettyPrint: logrusGinConfiguration.ECSFormatter.PrettyPrint,
 	})
 
 	// if !ok {
@@ -67,6 +66,7 @@ func (lf LogrusFormatter) AccessLogFormatter(params gin.LogFormatterParams) stri
 		"event.kind":                "event",
 		"event.category":            "web",
 		"event.type":                "access",
+		"event.module":              "krakend",
 		"event.duration":            params.Latency,
 		"event.start":               params.TimeStamp.Add(-params.Latency),
 		"event.end":                 params.TimeStamp,
@@ -87,7 +87,7 @@ func (lf LogrusFormatter) AccessLogFormatter(params gin.LogFormatterParams) stri
 var ErrWrongConfig = errors.New("getting the extra config for the krakend-logrus module")
 
 // NewLogger returns a krakend logger wrapping a logrus logger
-func NewApplicationLogger(cfg config.ExtraConfig, ctx context.Context) (*Logger, error) {
+func NewApplicationLogger(cfg config.ExtraConfig) (*Logger, error) {
 	telemetryConfig, err := ConfigGetter(cfg)
 	if err != nil {
 		panic(err)
@@ -102,13 +102,13 @@ func NewApplicationLogger(cfg config.ExtraConfig, ctx context.Context) (*Logger,
 	l := logrus.New()
 	l.Formatter = &ecslogrus.Formatter{
 		DisableHTMLEscape: logConfig.ECSFormatter.DisableHTMLEscape,
-		DataKey:           logConfig.ECSFormatter.DataKey,
-		PrettyPrint:       logConfig.ECSFormatter.PrettyPrint,
+		// DataKey:           logConfig.ECSFormatter.DataKey,
+		PrettyPrint: logConfig.ECSFormatter.PrettyPrint,
 	}
 	l.Level = level
 
 	return &Logger{
-		logger: l,
+		Logger: l,
 		level:  level,
 		module: logConfig.Module,
 	}, nil
@@ -116,7 +116,7 @@ func NewApplicationLogger(cfg config.ExtraConfig, ctx context.Context) (*Logger,
 
 // Logger is a wrapper over a github.com/sirupsen/logrus logger
 type Logger struct {
-	logger *logrus.Logger
+	Logger *logrus.Logger
 	level  logrus.Level
 	module string
 }
@@ -126,7 +126,8 @@ func (l *Logger) Debug(v ...interface{}) {
 	if l.level < logrus.DebugLevel {
 		return
 	}
-	l.logger.WithField("module", l.module).Debug(v...)
+
+	l.Logger.WithField("module", l.module).Debug(v...)
 }
 
 // Info implements the logger interface
@@ -134,7 +135,7 @@ func (l *Logger) Info(v ...interface{}) {
 	if l.level < logrus.InfoLevel {
 		return
 	}
-	l.logger.WithField("module", l.module).Info(v...)
+	l.Logger.WithField("module", l.module).Info(v...)
 }
 
 // Warning implements the logger interface
@@ -142,7 +143,7 @@ func (l *Logger) Warning(v ...interface{}) {
 	if l.level < logrus.WarnLevel {
 		return
 	}
-	l.logger.WithField("module", l.module).Warning(v...)
+	l.Logger.WithField("module", l.module).Warning(v...)
 }
 
 // Error implements the logger interface
@@ -150,17 +151,17 @@ func (l *Logger) Error(v ...interface{}) {
 	if l.level < logrus.ErrorLevel {
 		return
 	}
-	l.logger.WithField("module", l.module).Error(v...)
+	l.Logger.WithField("module", l.module).Error(v...)
 }
 
 // Critical implements the logger interface but demotes to the error level
 func (l *Logger) Critical(v ...interface{}) {
-	l.logger.WithField("module", l.module).Error(v...)
+	l.Logger.WithField("module", l.module).Error(v...)
 }
 
 // Fatal implements the logger interface
 func (l *Logger) Fatal(v ...interface{}) {
-	l.logger.WithField("module", l.module).Fatal(v...)
+	l.Logger.WithField("module", l.module).Fatal(v...)
 }
 
 var logLevels = map[string]logrus.Level{
