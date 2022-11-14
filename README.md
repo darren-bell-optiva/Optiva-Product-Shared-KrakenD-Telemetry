@@ -131,16 +131,16 @@ In KrakenD's `configuration.json` file, add the following to the service `extra_
 #### Available Config Options
 ##### Logging
 
-`level`: The desired log level
-`skip_paths`: List of endpoint paths which should not be logged. In the above example configuration, any request to `/__health` will not be logged.
-`json.disable_html_escape`: Allows disabling html escaping in output. See https://pkg.go.dev/github.com/sirupsen/logrus#JSONFormatter
-`json.pretty_print`: Will indent all json logs. See https://pkg.go.dev/github.com/sirupsen/logrus#JSONFormatter
+`level`: The desired log level   
+`skip_paths`: List of endpoint paths which should not be logged. In the above example configuration, any request to `/__health` will not be logged.   
+`json.disable_html_escape`: Allows disabling html escaping in output. See https://pkg.go.dev/github.com/sirupsen/logrus#JSONFormatter   
+`json.pretty_print`: Will indent all json logs. See https://pkg.go.dev/github.com/sirupsen/logrus#JSONFormatter   
 
 
 ##### Tracing
 
-`exporter_url` Location to export traces in jaeger format
-`attributes` - Additional attributes to apply to the trace
+`exporter_url` Location to export traces in jaeger format   
+`attributes` - Additional attributes to apply to the trace   
 
 ##### Metrics
 
